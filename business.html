@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daybook | Team Task Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <noscript><p class="noscript">Daybook needs JavaScript. Turn it on in your browser settings and reload the page.</p></noscript>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+  <!-- ================= LOGIN ================= -->
+  <main id="loginView" class="login" hidden>
+    <section class="login-brand">
+      <div class="brand brand-light"><span class="brand-mark" aria-hidden="true"></span>Daybook</div>
+
+      <div class="login-copy">
+        <h1 class="login-title">Every day starts with a clear list.</h1>
+        <p class="login-lede">Managers assign the day's work. Employees tick it off. Anything left unfinished moves to tomorrow's list on its own.</p>
+      </div>
+
+      <div class="sample-sheet" aria-hidden="true">
+        <div class="sample-head"><span>Today</span><span>2 of 3 done</span></div>
+        <div class="meter meter-sm"><span style="width:67%"></span></div>
+        <ul>
+          <li class="is-done"><i></i>Send stock report to supplier</li>
+          <li class="is-done"><i></i>Update the price list</li>
+          <li><i></i>Call back pending customers <em>From yesterday</em></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <form id="loginForm" class="login-form" novalidate>
+        <h2>Sign in</h2>
+        <p class="muted">Choose your role, then enter your username and password.</p>
+
+        <div class="role-switch" role="tablist" aria-label="Account type">
+          <button type="button" class="role-btn is-active" data-role="manager" role="tab" aria-selected="true">Manager</button>
+          <button type="button" class="role-btn" data-role="employee" role="tab" aria-selected="false">Employee</button>
+        </div>
+
+        <label class="field">
+          <span class="field-label">Username</span>
+          <input id="loginUser" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Password</span>
+          <span class="pw-wrap">
+            <input id="loginPass" type="password" autocomplete="current-password" required>
+            <button type="button" id="togglePw" class="pw-toggle" aria-label="Show password">Show</button>
+          </span>
+        </label>
+
+        <p id="loginError" class="form-error" role="alert"></p>
+
+        <button type="submit" id="loginSubmit" class="btn btn-primary btn-block">Sign in as manager</button>
+
+        <div class="demo">
+          <p class="muted">Try a demo account</p>
+          <div class="demo-list">
+            <button type="button" class="demo-chip" data-role="manager" data-user="manager" data-pass="manager123">
+              <strong>Manager</strong><span>manager / manager123</span>
+            </button>
+            <button type="button" class="demo-chip" data-role="employee" data-user="rahul" data-pass="rahul123">
+              <strong>Employee</strong><span>rahul / rahul123</span>
+            </button>
+            <button type="button" class="demo-chip" data-role="employee" data-user="priya" data-pass="priya123">
+              <strong>Employee</strong><span>priya / priya123</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- ================= APP ================= -->
+  <div id="appView" class="app" hidden>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Daybook</div>
+      <div class="topbar-user">
+        <span class="avatar" id="userAvatar" aria-hidden="true"></span>
+        <span class="user-meta">
+          <strong id="userName"></strong>
+          <span id="userRole"></span>
+        </span>
+        <button id="logoutBtn" type="button" class="btn btn-ghost">Log out</button>
+      </div>
+    </header>
+
+    <!-- ---------- MANAGER ---------- -->
+    <main id="managerView" class="view" hidden>
+      <section class="day-header">
+        <div class="day-text">
+          <h1 class="day-title" id="mgrDayTitle"></h1>
+          <p class="muted">Team progress for today</p>
+        </div>
+        <div class="day-figure">
+          <span class="big-percent" id="teamPercent">0%</span>
+          <span class="muted" id="teamCount">0 of 0 tasks done</span>
+        </div>
+      </section>
+      <div class="meter meter-lg" role="progressbar" aria-label="Team completion today" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="teamMeterWrap"><span id="teamMeter"></span></div>
+
+      <dl class="stat-strip">
+        <div><dt>Employees</dt><dd id="statEmployees">0</dd></div>
+        <div><dt>Tasks today</dt><dd id="statToday">0</dd></div>
+        <div><dt>Completed</dt><dd id="statDone">0</dd></div>
+        <div><dt>Carried over</dt><dd id="statCarried">0</dd></div>
+      </dl>
+
+      <div class="mgr-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Team</h2>
+            <span class="muted" id="teamSummary"></span>
+          </div>
+          <ul id="teamList" class="team-list"></ul>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <h2>Assign a task</h2>
+            <form id="taskForm" class="stack-form" novalidate>
+              <label class="field">
+                <span class="field-label">Employee</span>
+                <select id="taskEmployee" required></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Task</span>
+                <input id="taskTitle" type="text" maxlength="120" placeholder="e.g. Prepare the weekly sales report" required>
+              </label>
+              <label class="field">
+                <span class="field-label">Details <span class="optional">(optional)</span></span>
+                <textarea id="taskDesc" rows="3" maxlength="400" placeholder="Anything they need to know"></textarea>
+              </label>
+              <div class="field-row">
+                <label class="field">
+                  <span class="field-label">Priority</span>
+                  <select id="taskPriority">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span class="field-label">For date</span>
+                  <input id="taskDate" type="date" required>
+                </label>
+              </div>
+              <p id="taskError" class="form-error" role="alert"></p>
+              <button type="submit" class="btn btn-primary btn-block">Assign task</button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <h2>Add an employee</h2>
+            <form id="empForm" class="stack-form" novalidate>
+              <label class="field">
+                <span class="field-label">Full name</span>
+                <input id="empName" type="text" maxlength="60" placeholder="e.g. Sneha Pawar" required>
+              </label>
+              <div class="field-row">
+                <label class="field">
+                  <span class="field-label">Username</span>
+                  <input id="empUser" type="text" maxlength="20" autocapitalize="off" spellcheck="false" placeholder="sneha" required>
+                </label>
+                <label class="field">
+                  <span class="field-label">Password</span>
+                  <input id="empPass" type="text" maxlength="40" placeholder="min 4 characters" required>
+                </label>
+              </div>
+              <p id="empError" class="form-error" role="alert"></p>
+              <button type="submit" class="btn btn-secondary btn-block">Add employee</button>
+            </form>
+          </section>
+        </aside>
+      </div>
+
+      <section class="panel" id="boardPanel">
+        <div class="panel-head panel-head-wrap">
+          <div>
+            <h2>Tasks</h2>
+            <span class="muted" id="boardCount"></span>
+          </div>
+          <div class="filters">
+            <label class="field field-inline">
+              <span class="field-label">Employee</span>
+              <select id="filterEmployee"></select>
+            </label>
+            <label class="field field-inline">
+              <span class="field-label">Show</span>
+              <select id="filterScope">
+                <option value="today">Today</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="pending">All unfinished</option>
+                <option value="completed">Completed</option>
+                <option value="all">Everything</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <ul id="taskBoard" class="task-list"></ul>
+      </section>
+
+      <footer class="view-foot">
+        <p class="muted">Data is saved in this browser. Unfinished tasks move to the next day automatically at midnight.</p>
+        <button type="button" id="resetBtn" class="btn btn-link">Reset demo data</button>
+      </footer>
+    </main>
+
+    <!-- ---------- EMPLOYEE ---------- -->
+    <main id="employeeView" class="view" hidden>
+      <section class="day-header">
+        <div class="day-text">
+          <h1 class="day-title" id="empDayTitle"></h1>
+          <p class="muted" id="empGreeting"></p>
+        </div>
+        <div class="day-figure">
+          <span class="big-percent" id="empPercent">0%</span>
+          <span class="muted" id="empCount">0 of 0 tasks done</span>
+        </div>
+      </section>
+      <div class="meter meter-lg" role="progressbar" aria-label="Your completion today" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="empMeterWrap"><span id="empMeter"></span></div>
+
+      <dl class="stat-strip">
+        <div><dt>Today's tasks</dt><dd id="empStatTotal">0</dd></div>
+        <div><dt>Completed</dt><dd id="empStatDone">0</dd></div>
+        <div><dt>Remaining</dt><dd id="empStatLeft">0</dd></div>
+        <div><dt>Carried over</dt><dd id="empStatCarried">0</dd></div>
+      </dl>
+
+      <div class="emp-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Today's tasks</h2>
+            <span class="muted">Tick a task when it's done</span>
+          </div>
+          <p id="empAllDone" class="all-done" hidden>All of today's tasks are done. Nice work.</p>
+          <ul id="empTodayList" class="task-list"></ul>
+          <p class="note">Anything you don't finish today moves to tomorrow's list automatically.</p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Coming up</h2>
+            <span class="muted" id="empUpcomingCount"></span>
+          </div>
+          <ul id="empUpcomingList" class="task-list task-list-compact"></ul>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
