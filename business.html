@@ -97,6 +97,12 @@
 
     <!-- ---------- MANAGER ---------- -->
     <main id="managerView" class="view" hidden>
+      <nav class="view-tabs" role="tablist" aria-label="Manager sections">
+        <button type="button" class="view-tab is-active" data-tab="dashboard" role="tab" aria-selected="true">Dashboard</button>
+        <button type="button" class="view-tab" data-tab="analytics" role="tab" aria-selected="false">Employee analytics</button>
+      </nav>
+
+      <div id="mgrDashboard">
       <section class="day-header">
         <div class="day-text">
           <h1 class="day-title" id="mgrDayTitle"></h1>
@@ -153,6 +159,16 @@
                 <label class="field">
                   <span class="field-label">For date</span>
                   <input id="taskDate" type="date" required>
+                </label>
+              </div>
+              <div class="field-row">
+                <label class="field">
+                  <span class="field-label">Category <span class="optional">(optional)</span></span>
+                  <select id="taskCategory"></select>
+                </label>
+                <label class="field">
+                  <span class="field-label">Estimated hours <span class="optional">(optional)</span></span>
+                  <input id="taskHours" type="number" min="0" max="999" step="0.5" inputmode="decimal" placeholder="e.g. 4">
                 </label>
               </div>
               <p id="taskError" class="form-error" role="alert"></p>
@@ -214,6 +230,98 @@
         <p class="muted">Data is saved in this browser. Unfinished tasks move to the next day automatically at midnight.</p>
         <button type="button" id="resetBtn" class="btn btn-link">Reset demo data</button>
       </footer>
+      </div>
+
+      <!-- ---------- EMPLOYEE ANALYTICS (manager) ---------- -->
+      <div id="mgrAnalytics" hidden>
+        <section class="an-head">
+          <h1 class="day-title">Employee analytics</h1>
+          <p class="muted">Live numbers from your team's tasks, plus predictions from the model trained in businessworkflow.ipynb.</p>
+        </section>
+
+        <dl class="stat-strip" id="anStats"></dl>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Employee performance</h2>
+            <span class="muted">All tasks to date</span>
+          </div>
+          <div class="table-wrap"><table class="an-table" id="anEmployeeTable"></table></div>
+        </section>
+
+        <div class="an-grid">
+          <section class="panel">
+            <h2 class="panel-title">Completed in the last 7 days</h2>
+            <div id="anWeek"></div>
+          </section>
+          <section class="panel">
+            <h2 class="panel-title">Tasks by category</h2>
+            <div id="anCategory"></div>
+          </section>
+          <section class="panel">
+            <h2 class="panel-title">Tasks by priority</h2>
+            <div id="anPriority"></div>
+          </section>
+        </div>
+
+        <section class="panel" id="mlPanel">
+          <div class="panel-head panel-head-wrap">
+            <div>
+              <h2>Status prediction model</h2>
+              <span class="muted" id="mlSub"></span>
+            </div>
+            <div class="ml-actions">
+              <label class="btn btn-secondary btn-small file-btn">
+                <span id="mlFileLabel">Load model file</span>
+                <input type="file" id="mlFile" accept=".json,application/json">
+              </label>
+              <button type="button" id="mlRemove" class="btn btn-small btn-danger-quiet" hidden>Remove model</button>
+            </div>
+          </div>
+          <p id="mlError" class="form-error" role="alert"></p>
+
+          <div id="mlEmpty" class="ml-empty">
+            <p>Load your trained model to predict the status of unfinished tasks and to see the notebook's charts here.</p>
+            <ol class="steps">
+              <li>Paste the export cell (<code>notebook_export_cell.py</code>) at the end of <code>businessworkflow.ipynb</code> and run the whole notebook.</li>
+              <li>The cell downloads <code>daybook_model.json</code>.</li>
+              <li>Click <strong>Load model file</strong> and choose that file. It is saved to Firebase, so every manager device gets it.</li>
+            </ol>
+          </div>
+
+          <div id="mlLoaded" hidden>
+            <dl class="stat-strip" id="mlMetrics"></dl>
+            <p id="mlCheckNote" class="ml-note"></p>
+            <div class="an-grid an-grid-flush">
+              <div>
+                <h3 class="block-title">Results on the notebook's test set</h3>
+                <div class="table-wrap"><table class="an-table an-table-sm" id="mlReport"></table></div>
+              </div>
+              <div>
+                <h3 class="block-title">Predicted status of unfinished tasks</h3>
+                <ul id="mlPredictions" class="pred-list"></ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="edaPanel" hidden>
+          <div class="panel-head panel-head-wrap">
+            <div>
+              <h2>Training data insights</h2>
+              <span class="muted" id="edaSub"></span>
+            </div>
+          </div>
+          <div class="an-grid an-grid-flush">
+            <div><h3 class="block-title">Distribution of task categories</h3><div id="edaCategory"></div></div>
+            <div><h3 class="block-title">Distribution of estimated hours</h3><div id="edaHours"></div></div>
+            <div><h3 class="block-title">Distribution of priority</h3><div id="edaPriority"></div></div>
+            <div><h3 class="block-title">Distribution of status</h3><div id="edaStatus"></div></div>
+            <div><h3 class="block-title">Distribution of assignee</h3><div id="edaAssignee"></div></div>
+            <div><h3 class="block-title">Correlation of numerical features</h3><div class="table-wrap" id="edaCorr"></div></div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <!-- ---------- EMPLOYEE ---------- -->
